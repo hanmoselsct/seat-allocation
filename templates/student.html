@@ -1,1 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>学生 - 座位分配志愿系统</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    /* 为方便演示加入少量样式，或把你的原样式放入 static/style.css */
+    body{font-family: "Microsoft YaHei",sans-serif;padding:20px;background:#f5f7fa}
+    .container{max-width:1000px;margin:0 auto;background:#fff;padding:20px;border-radius:8px}
+    button{padding:10px 14px;border-radius:6px;border:none;background:#1e6fba;color:#fff;cursor:pointer}
+    .volunteer-item{display:inline-block;padding:6px 10px;border:1px solid #ddd;margin:4px;border-radius:6px;cursor:pointer}
+    .selected{background:#1e6fba;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>学生端 — 填报志愿</h1>
 
+    <div>
+      <label>姓名：<input id="name" /></label>
+    </div>
+    <div>
+      <label>成绩：<input id="score" type="number" /></label>
+    </div>
+
+    <h3>选择志愿（最多20个）</h3>
+    <div id="volunteersContainer"></div>
+
+    <div style="margin-top:10px">
+      <button id="submitBtn">提交志愿</button>
+      <button id="refreshBtn" style="background:#6c757d;margin-left:8px">刷新我的志愿</button>
+    </div>
+
+    <h3 style="margin-top:20px">我的已提交志愿</h3>
+    <div id="mySubmission">尚未提交</div>
+
+    <div style="margin-top:20px">
+      <a href="/teacher" target="_blank">老师入口（需要密码）</a>
+    </div>
+  </div>
+
+<script>
+  // 与后端保持一致的座位生成（与原来相同）
+  const SEATS = (function(){
+    const seats = [];
+    for(let row=1;row<=7;row++){ seats.push(`第一组第${row}排左`); seats.push(`第一组第${row}排右`); }
+    for(let row=1;row<=8;row++){ seats.push(`第二组第${row}排左`); seats.push(`第二组第${row}排右`); }
+    for(let row=1;row<=8;row++){ seats.push(`第三组第${row}排左`); seats.push(`第三组第${row}排右`); }
+    for(let row=1;row<=7;row++){ seats.push(`第四组第${row}排左`); seats.push(`第四组第${row}排右`); }
+    return seats;
+  })();
+
+  const MAX_VOL = 20;
+  let selected = [];
+
+  const vc = document.getElementById('volunteersContainer');
+
+  function renderSeats(){
+    vc.innerHTML = '';
+    SEATS.forEach(s=>{
+      const d = document.createElement('div');
+      d.className = 'volunteer-item';
+      d.textContent = s;
+      d.onclick = ()=> {
+        const idx = selected.indexOf(s);
+        if(idx===-1){
+          if(selected.length>=MAX_VOL){ alert('最多20个志愿'); return; }
+          selected.push(s);
+          d.classList.add('selected');
+        } else {
+          selected.splice(idx,1);
+          d.classList.remove('selected');
+        }
+      };
+      vc.appendChild(d);
+    });
+  }
+
+  renderSeats();
+
+  document.getElementById('submitBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('name').value.trim();
+    const score = parseInt(document.getElementById('score').value);
+    if(!name){ alert('请输入姓名'); return; }
+    if(isNaN(score)){ alert('请输入成绩'); return; }
+    if(selected.length===0){ alert('请至少选择一个志愿'); return; }
+
+    const res = await fetch('/api/submit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, score, volunteers: selected})
+    });
+    const data = await res.json();
+    if(data.ok){ alert('提交成功'); loadMySubmission(name); }
+    else alert(data.error || '提交失败');
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('name').value.trim();
+    if(!name) { alert('请输入姓名以刷新'); return; }
+    loadMySubmission(name);
+  });
+
+  async function loadMySubmission(name){
+    if(!name) return;
+    const res = await fetch(`/api/student?name=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    const box = document.getElementById('mySubmission');
+    if(data.found){
+      box.innerHTML = `<div><b>${data.name}</b> （${data.score} 分）<br>志愿：${data.volunteers.join(' , ')}<br>录取：${data.admitted || '未录取'}</div>`;
+    } else {
+      box.innerHTML = '尚未提交';
+    }
+  }
+
+  // 页面加载时尽量读取当前输入姓名的提交（如果有）
+  document.getElementById('name').addEventListener('change', (e)=>{
+    loadMySubmission(e.target.value.trim());
+  });
+</script>
+</body>
+</html>

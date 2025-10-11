@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>老师 - 座位分配管理</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body{font-family: "Microsoft YaHei",sans-serif;padding:20px;background:#f5f7fa}
+    .container{max-width:1100px;margin:0 auto;background:#fff;padding:20px;border-radius:8px}
+    button{padding:8px 12px;border-radius:6px;border:none;background:#1e6fba;color:#fff;cursor:pointer}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #eee;padding:8px;text-align:left}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>老师端 — 管理与分配</h1>
+
+    <div id="loginArea">
+      <label>教师密码：<input type="password" id="teacherPw" /></label>
+      <button id="loginBtn">登录</button>
+      <span id="loginMsg" style="margin-left:10px;color:#888"></span>
+    </div>
+
+    <div id="controlArea" style="display:none;margin-top:12px">
+      <button id="refreshBtn">刷新学生列表</button>
+      <button id="assignBtn" style="background:#28a745">开始模拟分配</button>
+      <button id="resetBtn" style="background:#6c757d">重置所有数据</button>
+      <button id="logoutBtn" style="background:#dc3545">登出</button>
+    </div>
+
+    <h3 style="margin-top:16px">学生志愿列表（按成绩降序）</h3>
+    <div id="studentsArea">尚未登录</div>
+
+    <h3 style="margin-top:16px">分配结果</h3>
+    <div id="resultsArea">暂无</div>
+
+    <h3 style="margin-top:16px">分配过程记录</h3>
+    <div id="processArea">暂无</div>
+  </div>
+
+<script>
+  async function login(password){
+    const res = await fetch('/api/teacher_login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password})
+    });
+    return res.json();
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', async ()=>{
+    const pw = document.getElementById('teacherPw').value;
+    const r = await login(pw);
+    if(r.ok){
+      document.getElementById('loginArea').style.display='none';
+      document.getElementById('controlArea').style.display='block';
+      loadStudents();
+      loadResults();
+      document.getElementById('loginMsg').textContent = '';
+    } else {
+      document.getElementById('loginMsg').textContent = '密码错误';
+    }
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+    await fetch('/api/logout', {method:'POST'});
+    document.getElementById('loginArea').style.display='block';
+    document.getElementById('controlArea').style.display='none';
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', loadStudents);
+  document.getElementById('assignBtn').addEventListener('click', async ()=>{
+    if(!confirm('确认开始模拟分配？')) return;
+    const res = await fetch('/api/assign', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+    const data = await res.json();
+    if(data.ok){
+      alert('分配完成');
+      loadStudents();
+      loadResults();
+      if(data.process) renderProcess(data.process);
+    } else {
+      alert(data.error || '分配失败（请确认已登录）');
+    }
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', async ()=>{
+    if(!confirm('确认重置所有数据？')) return;
+    const res = await fetch('/api/reset', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+    const d = await res.json();
+    if(d.ok){ alert('已重置'); loadStudents(); loadResults(); document.getElementById('processArea').innerText='暂无'; }
+    else alert('重置失败');
+  });
+
+  async function loadStudents(){
+    const res = await fetch('/api/students');
+    if(res.status===401){
+      alert('未登录或认证失败，请重新登录');
+      document.getElementById('loginArea').style.display='block';
+      document.getElementById('controlArea').style.display='none';
+      return;
+    }
+    const data = await res.json();
+    const area = document.getElementById('studentsArea');
+    if(!data.students || data.students.length===0){ area.innerText='暂无学生数据'; return; }
+    let html = '<table><tr><th>姓名</th><th>成绩</th><th>志愿(前3)</th><th>录取</th></tr>';
+    data.students.forEach(s=>{
+      const first3 = s.volunteers.slice(0,3).join('; ');
+      html += `<tr><td>${s.name}</td><td>${s.score}</td><td>${first3}${s.volunteers.length>3? ' ...':''}</td><td>${s.admitted || ''}</td></tr>`;
+    });
+    html += '</table>';
+    area.innerHTML = html;
+  }
+
+  async function loadResults(){
+    const res = await fetch('/api/results');
+    const data = await res.json();
+    const area = document.getElementById('resultsArea');
+    if(!data.results || data.results.length===0){ area.innerText='暂无结果'; return; }
+    let html = '<table><tr><th>姓名</th><th>成绩</th><th>录取</th></tr>';
+    data.results.forEach(r=>{
+      html += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.admitted || '未录取'}</td></tr>`;
+    });
+    html += '</table>';
+    area.innerHTML = html;
+  }
+
+  function renderProcess(process){
+    const area = document.getElementById('processArea');
+    if(!process || process.length===0){ area.innerText = '暂无分配过程记录'; return; }
+    let html = '<ol>';
+    process.forEach(p=>{
+      html += `<li>${p.student} (${p.score}) -> ${p.volunteer} : ${p.result}</li>`;
+    });
+    html += '</ol>';
+    area.innerHTML = html;
+  }
+
+</script>
+</body>
+</html>
