@@ -1,1 +1,4 @@
-
+/* static/style.css - 可根据需要扩展 */
+body { font-family: "Microsoft YaHei", sans-serif; background:#f5f7fa; color:#333; }
+.container { max-width:1100px; margin:20px auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+button { cursor:pointer; border:none; border-radius:6px; padding:8px 12px; }
