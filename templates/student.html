@@ -6,125 +6,27 @@
   <title>学生端 - 多人座位分配系统</title>
   <link rel="stylesheet" href="/static/style.css">
   <style>
-    body {
-      font-family: "Microsoft YaHei", sans-serif;
-      background: linear-gradient(to right, #f8fbff, #eef5fc);
-      margin: 0;
-      padding: 0;
-      color: #333;
+    /* 小幅修改： modal 样式 */
+    .modal {
+      display:none;
+      position:fixed;
+      z-index:1200;
+      left:0; top:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.5);
+      align-items:center;
+      justify-content:center;
     }
-
-    .container {
-      max-width: 1300px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      text-align: center;
-      color: #1e6fba;
-      margin-bottom: 10px;
-    }
-    h2 {
-      color: #1e6fba;
-      margin-top: 0;
-    }
-
-    .flex-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 30px;
-    }
-
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      flex: 1;
-      min-width: 340px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 12px;
-      font-size: 15px;
-    }
-
-    input[type=text], input[type=number] {
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      width: 180px;
-      margin-left: 8px;
-    }
-    input:focus { outline: none; border-color: #1e6fba; }
-
-    button {
-      background-color: #1e6fba;
-      border: none;
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.2s;
-      margin-right: 8px;
-    }
-    button:hover { background-color: #155a9e; transform: translateY(-1px); }
-    button:active { transform: scale(0.98); }
-
-    #addStudentBtn { background:#1e6fba; }
-    #clearFormBtn { background:#6c757d; }
-
-    .volunteer-item {
-      display:inline-block;
-      padding:8px 14px;
-      margin:6px;
-      border:1px solid #cdd7e3;
-      border-radius:8px;
-      background:#f5f9ff;
-      transition:all 0.2s;
-      cursor:pointer;
-    }
-    .volunteer-item:hover { background:#e8f1ff; }
-    .volunteer-item.selected {
-      background:#1e6fba;
-      color:#fff;
-      border-color:#155a9e;
-    }
-
-    #volunteersGrid, #myVolunteersList, #seatsDisplay {
-      border:1px solid #e2e6ec;
-      border-radius:10px;
-      padding:15px;
-      background:#fafcff;
-      min-height:100px;
-      max-height:400px;
+    .modal-content {
+      background:#fff;
+      padding:16px;
+      border-radius:12px;
+      max-width:90%;
+      max-height:90%;
       overflow:auto;
     }
-
-    #notificationContainer {
-      position:fixed; top:20px; right:20px; z-index:1000;
-    }
-    #notificationContainer div {
-      background:#1e6fba;
-      color:white;
-      padding:10px 16px;
-      border-radius:8px;
-      margin-top:8px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .error { color:#dc3545; font-size:13px; }
-
-    @media (max-width:768px){
-      .flex-wrap { flex-direction: column; }
-    }
+    .modal-content img { max-width:100%; height:auto; display:block; margin:0 auto; }
+    .modal-close { float:right; cursor:pointer; color:#999; font-weight:bold; }
   </style>
 </head>
 
@@ -137,7 +39,6 @@
     </p>
 
     <div class="flex-wrap">
-      <!-- 左侧：学生填报 -->
       <div class="card">
         <h2>填报信息</h2>
         <label>姓名：<input id="studentName" type="text" placeholder="请输入姓名"></label>
@@ -152,21 +53,40 @@
         <div style="margin-top:15px;">
           <button id="addStudentBtn">提交志愿</button>
           <button id="clearFormBtn">清空</button>
+          <button id="viewMapBtn" style="background:#17a2b8;">查看座位分布图</button>
         </div>
 
         <h3 style="margin-top:20px;">我的志愿</h3>
         <div id="myVolunteersList">请填写姓名后刷新</div>
       </div>
 
-      <!-- 右侧：座位分布 -->
       <div class="card">
-        <h2>当前座位分布</h2>
-        <div id="seatsDisplay">加载中...</div>
+        <h2>提示</h2>
+        <p>座位分布图为静态图片，学生版不显示姓名。若想查看带学生姓名的座位图，请老师登录并在老师界面查看或下载。</p>
+        <h3 style="margin-top:18px">快速操作</h3>
+        <ul>
+          <li>填写姓名后可刷新查看已提交的记录</li>
+          <li>提交后老师会在后台执行分配</li>
+        </ul>
       </div>
     </div>
   </div>
 
-  <div id="notificationContainer"></div>
+  <!-- Modal for seatmap image -->
+  <div id="mapModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="modal-close">&times;</span>
+      <h3 style="margin-top:4px">座位分布图（公共视图）</h3>
+      <div style="text-align:center; margin-top:8px;">
+        <img id="seatmapImg" src="/seatmap.png?mode=public" alt="座位分布图">
+      </div>
+      <div style="text-align:center; margin-top:12px;">
+        <a id="downloadMap" href="/seatmap.png?mode=public" download="seatmap_public.png" style="text-decoration:none;">
+          <button>下载图片</button>
+        </a>
+      </div>
+    </div>
+  </div>
 
 <script>
 'use strict';
@@ -174,7 +94,6 @@ const MAX_VOLUNTEERS = 20;
 const MAX_SCORE = 750;
 const MIN_SCORE = 0;
 
-// ✅ 简化后的座位生成
 const SEATS = (() => {
   const seats = [];
   const groups = { "第一组":7, "第二组":8, "第三组":8, "第四组":7 };
@@ -186,20 +105,29 @@ const SEATS = (() => {
 
 let selectedVolunteers = [];
 
-// DOM 引用
 const nameInput = document.getElementById('studentName');
 const scoreInput = document.getElementById('studentScore');
 const volunteersGrid = document.getElementById('volunteersGrid');
 const myList = document.getElementById('myVolunteersList');
 const nameErr = document.getElementById('nameError');
 const scoreErr = document.getElementById('scoreError');
-const notificationContainer = document.getElementById('notificationContainer');
-const seatsDisplay = document.getElementById('seatsDisplay');
+const mapModal = document.getElementById('mapModal');
+const seatmapImg = document.getElementById('seatmapImg');
+const downloadMap = document.getElementById('downloadMap');
 
 function notify(msg, t=3000){
-  const d=document.createElement('div'); d.textContent=msg;
-  notificationContainer.appendChild(d);
-  setTimeout(()=>d.remove(),t);
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.background = '#1e6fba';
+  el.style.color = '#fff';
+  el.style.padding = '8px 12px';
+  el.style.borderRadius = '8px';
+  el.style.position = 'fixed';
+  el.style.top = '20px';
+  el.style.right = '20px';
+  el.style.zIndex = 2000;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), t);
 }
 
 function validateForm(name, score){
@@ -232,72 +160,51 @@ function renderVolunteerChoices(){
   });
 }
 
-// 渲染座位分布
-async function renderSeats(){
-  seatsDisplay.innerHTML='加载中...';
-  try{
-    const res=await fetch('/api/results');
-    const data=await res.json();
-    const assigned={};
-    if(data && data.results){
-      data.results.forEach(r=>{if(r.admitted)assigned[r.admitted]=(assigned[r.admitted]||[]).concat(r.name);});
-    }
-    seatsDisplay.innerHTML='';
-    const groups={"第一组":7,"第二组":8,"第三组":8,"第四组":7};
-    Object.entries(groups).forEach(([g,rows])=>{
-      const card=document.createElement('div');
-      card.className='card';
-      card.style.marginBottom='15px';
-      card.innerHTML=`<h3 style="margin-top:0">${g}</h3>`;
-      for(let r=1;r<=rows;r++){
-        const name=`${g}第${r}排`;
-        const list=assigned[name]||[];
-        const div=document.createElement('div');
-        div.style.margin='6px 0';
-        div.innerHTML=`<b>${name}</b> — <span>${list.length}/2 已占</span>${list.length>0?('：'+list.join('、')):''}`;
-        div.style.color=list.length>=2?'#28a745':'#333';
-        card.appendChild(div);
-      }
-      seatsDisplay.appendChild(card);
-    });
-  }catch(e){
-    seatsDisplay.textContent='加载失败';
-  }
-}
-
-// 提交志愿
 document.getElementById('addStudentBtn').onclick=async()=>{
   const name=nameInput.value.trim();
   const score=parseInt(scoreInput.value);
   if(!validateForm(name,score))return;
-  const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score,volunteers:selectedVolunteers})});
-  const data=await res.json();
-  if(data.ok){notify('提交成功');loadMy(name);renderSeats();}
-  else alert(data.error||'提交失败');
+  try{
+    const res = await fetch('/api/submit', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name,score,volunteers:selectedVolunteers})
+    });
+    const data = await res.json();
+    if(data.ok){ notify('提交成功'); loadMy(name); }
+    else { alert(data.error || '提交失败'); }
+  }catch(e){ alert('网络请求失败'); }
 };
 
-// 清空表单
 document.getElementById('clearFormBtn').onclick=()=>{
   nameInput.value=''; scoreInput.value='';
   selectedVolunteers=[]; renderVolunteerChoices();
   myList.textContent='请填写姓名后刷新';
 };
 
+document.getElementById('viewMapBtn').onclick=()=>{
+  // 静态公共视图
+  seatmapImg.src = '/seatmap.png?mode=public&' + Date.now();
+  downloadMap.href = '/seatmap.png?mode=public';
+  mapModal.style.display = 'flex';
+};
+
+document.getElementById('closeModal').onclick = ()=>{ mapModal.style.display='none'; };
+mapModal.addEventListener('click', (e)=>{ if(e.target === mapModal) mapModal.style.display='none'; });
+
 async function loadMy(name){
-  if(!name){myList.textContent='请输入姓名';return;}
-  const res=await fetch(`/api/student?name=${encodeURIComponent(name)}`);
-  const data=await res.json();
+  if(!name){ myList.textContent='请输入姓名'; return; }
+  const res = await fetch('/api/student?name=' + encodeURIComponent(name));
+  const data = await res.json();
   if(data.found){
-    myList.innerHTML=`<b>${data.name}</b>（${data.score}分）<br>志愿：${data.volunteers.join('，')}<br>录取：${data.admitted||'未录取'}`;
-  }else myList.textContent='尚未提交';
+    myList.innerHTML = `<b>${data.name}</b>（${data.score}分）<br>志愿：${data.volunteers.join('，')}<br>录取：${data.admitted || '未录取'}`;
+  } else myList.textContent = '尚未提交';
 }
 
-nameInput.onchange=(e)=>loadMy(e.target.value.trim());
+nameInput.onchange = (e)=> loadMy(e.target.value.trim());
 
-// 初始化
 function init(){
   renderVolunteerChoices();
-  renderSeats();
+  // 不立刻加载 map（学生端使用按钮打开）
 }
 init();
 </script>
