@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <title>座位分配系统 - 首页</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>座位分配系统 - 入口</title>
+  <link rel="stylesheet" href="/static/style.css">
   <style>
-    body {
-      font-family: "Microsoft YaHei";
-      background: linear-gradient(to right, #f8fbff, #eef5fc);
-      text-align: center;
-      padding-top: 80px;
-      color: #333;
+    .hero {
+      text-align:center;
+      padding:60px 20px;
     }
-    h1 {
-      color: #1e6fba;
-      font-size: 2.2em;
+    .btn-big {
+      display:inline-block;
+      margin:12px;
+      padding:14px 22px;
+      border-radius:12px;
+      background:#1e6fba;
+      color:#fff;
+      text-decoration:none;
+      font-size:18px;
+      box-shadow:0 6px 18px rgba(30,111,186,0.18);
     }
-    p { color:#666; margin-bottom:40px; }
-    .btn {
-      display: inline-block;
-      background: #1e6fba;
-      color: white;
-      padding: 14px 28px;
-      border-radius: 10px;
-      margin: 10px;
-      font-size: 1.1em;
-      text-decoration: none;
-      transition: 0.25s;
-      box-shadow: 0 5px 12px rgba(0,0,0,0.1);
-    }
-    .btn:hover {
-      background: #155a9e;
-      transform: translateY(-2px);
+    .btn-secondary {
+      background:#6c757d;
     }
   </style>
 </head>
 <body>
-  <h1>🎓 座位分配系统</h1>
-  <p>请选择你的身份进入系统</p>
-  <a class="btn" href="/student">我是学生 👩‍🎓</a>
-  <a class="btn" href="/teacher">我是老师 👩‍🏫</a>
+  <div class="container">
+    <div class="hero card">
+      <h1>🎓 座位分配系统</h1>
+      <p style="color:#666">请选择你的身份</p>
+      <div style="margin-top:24px;">
+        <a class="btn-big" href="/student">我是学生</a>
+        <a class="btn-big btn-secondary" href="/teacher">我是老师</a>
+      </div>
+    </div>
+    <div style="text-align:center; color:#888; margin-top:10px;">
+      访问老师页面需要教师密码
+    </div>
+  </div>
 </body>
 </html>
