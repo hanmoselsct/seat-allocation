@@ -6,35 +6,19 @@
 <title>老师后台</title>
 <link rel="stylesheet" href="/static/style.css">
 <style>
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-}
-th { background: #1e6fba; color: white; }
-tr:nth-child(even) { background: #f9f9f9; }
-
+table { width:100%; border-collapse:collapse; }
+th,td { border:1px solid #ddd; padding:8px; text-align:center; }
+th { background:#1e6fba; color:white; }
+tr:nth-child(even){ background:#f9f9f9; }
 #seatMapModal {
-  position: fixed; top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.6);
-  display:none; align-items:center; justify-content:center;
-  z-index: 999;
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.6); display:none;
+  align-items:center; justify-content:center; z-index:999;
 }
-#seatMapModal img {
-  max-width: 90%; max-height: 85%;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
+#seatMapModal img { max-width:90%; max-height:85%; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.4);}
 #seatMapModal .close-btn {
-  position:absolute; top:20px; right:30px;
-  background:#fff; color:#000;
-  border:none; border-radius:6px;
-  padding:8px 12px; cursor:pointer;
-  font-weight:bold;
+  position:absolute; top:20px; right:30px; background:#fff; color:#000;
+  border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-weight:bold;
 }
 </style>
 </head>
@@ -44,7 +28,7 @@ tr:nth-child(even) { background: #f9f9f9; }
 
   <div class="card" id="loginBox">
     <h3>请输入老师密码</h3>
-    <input id="teacherPwd" type="password" placeholder="请输入密码">
+    <input id="teacherPwd" type="password">
     <button onclick="login()">登录</button>
   </div>
 
@@ -52,50 +36,50 @@ tr:nth-child(even) { background: #f9f9f9; }
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <h2>学生志愿列表</h2>
       <div>
+        <button onclick="refresh()">刷新数据</button>
         <button onclick="assign()">开始分配</button>
         <button onclick="viewSeatMap()">查看录取座位图</button>
         <button style="background:#dc3545" onclick="resetAll()">清空数据</button>
       </div>
     </div>
     <table id="studentTable">
-      <thead>
-        <tr><th>姓名</th><th>成绩</th><th>志愿</th><th>录取结果</th></tr>
-      </thead>
-      <tbody></tbody>
+      <thead><tr><th>姓名</th><th>成绩</th><th>志愿</th><th>录取结果</th></tr></thead>
+      <tbody><tr><td colspan="4">暂无数据，请点击“刷新数据”</td></tr></tbody>
     </table>
   </div>
 </div>
 
 <div id="seatMapModal">
   <button class="close-btn" onclick="hideSeatMap()">× 关闭</button>
-  <img id="seatMapImage" src="" alt="座位图">
+  <img id="seatMapImage" src="">
 </div>
 
 <script>
-function login() {
-  const pwd = document.getElementById("teacherPwd").value;
-  fetch("/api/teacher_login", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({password: pwd})
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok){ 
+function login(){
+  const pwd=document.getElementById("teacherPwd").value;
+  fetch("/api/teacher_login",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({password:pwd})}).then(r=>r.json()).then(d=>{
+    if(d.ok){
       document.getElementById("loginBox").style.display="none";
       document.getElementById("mainBox").style.display="block";
-      loadStudents();
     } else alert("密码错误");
   });
 }
 
-function loadStudents(){
+function refresh(){
   fetch("/api/students",{method:"POST",headers:{"Content-Type":"application/json"},
   body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
   .then(r=>r.json()).then(d=>{
     const tbody=document.querySelector("#studentTable tbody");
     tbody.innerHTML="";
+    if(!d.students.length){
+      tbody.innerHTML="<tr><td colspan='4'>暂无学生数据</td></tr>";
+      return;
+    }
     d.students.forEach(s=>{
       const tr=document.createElement("tr");
       tr.innerHTML=`<td>${s.name}</td><td>${s.score}</td>
-      <td>${s.volunteers.join("、")}</td><td>${s.admitted||""}</td>`;
+        <td>${s.volunteers.join("、")}</td><td>${s.admitted||""}</td>`;
       tbody.appendChild(tr);
     });
   });
@@ -104,27 +88,22 @@ function loadStudents(){
 function assign(){
   fetch("/api/assign",{method:"POST",headers:{"Content-Type":"application/json"},
   body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
-  .then(r=>r.json()).then(d=>{
-    if(d.ok){ alert("分配完成"); loadStudents(); }
-  });
-}
-
-function resetAll(){
-  if(!confirm("确定清空所有数据？")) return;
-  fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
-  .then(r=>r.json()).then(()=>{ alert("已清空"); loadStudents(); });
+  .then(r=>r.json()).then(d=>{ if(d.ok){ alert("分配完成"); refresh(); }});
 }
 
 function viewSeatMap(){
   const modal=document.getElementById("seatMapModal");
   const img=document.getElementById("seatMapImage");
-  const pwd=document.getElementById("teacherPwd").value;
-  img.src="/seatmap.png?t="+Date.now()+"&teacher_password="+pwd;
+  img.src="/seatmap.png?t="+Date.now();
   modal.style.display="flex";
 }
-function hideSeatMap(){
-  document.getElementById("seatMapModal").style.display="none";
+function hideSeatMap(){ document.getElementById("seatMapModal").style.display="none"; }
+
+function resetAll(){
+  if(!confirm("确定清空所有数据？"))return;
+  fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
+  .then(()=>{alert("已清空");refresh();});
 }
 </script>
 </body>
