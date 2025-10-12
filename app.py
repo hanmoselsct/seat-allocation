@@ -100,25 +100,8 @@ def submit():
     db.commit()
     return jsonify({"ok": True})
 
-@app.route("/api/student")
-def get_student():
-    name = request.args.get("name", "").strip()
-    db = get_db()
-    c = db.cursor()
-    c.execute("SELECT * FROM students WHERE name=?", (name,))
-    r = c.fetchone()
-    if not r:
-        return jsonify({"found": False})
-    return jsonify({
-        "found": True,
-        "name": r["name"],
-        "score": r["score"],
-        "volunteers": json.loads(r["volunteers"]),
-        "admitted": r["admitted"]
-    })
-
 # ---------- 老师端 ----------
-@app.route("/api/students")
+@app.route("/api/students", methods=["POST"])
 @require_teacher
 def all_students():
     db = get_db()
@@ -165,16 +148,7 @@ def assign():
                 break
         c.execute("UPDATE students SET admitted=? WHERE id=?", (admitted, s["id"]))
     db.commit()
-
     return jsonify({"ok": True, "process": process})
-
-@app.route("/api/results")
-def results():
-    db = get_db()
-    c = db.cursor()
-    c.execute("SELECT name,score,admitted FROM students ORDER BY score DESC")
-    return jsonify({"results": [{"name": r["name"], "score": r["score"], "admitted": r["admitted"]}
-                               for r in c.fetchall()]})
 
 @app.route("/api/teacher_login", methods=["POST"])
 def teacher_login():
@@ -184,19 +158,10 @@ def teacher_login():
         return jsonify({"ok": True})
     return jsonify({"error": "wrong password"}), 401
 
-@app.route("/api/logout", methods=["POST"])
-def logout():
-    session.pop("is_teacher", None)
-    return jsonify({"ok": True})
-
-# ---------- 座位图 ----------
 @app.route("/seatmap.png")
+@require_teacher
 def seatmap():
-    show_names = session.get("is_teacher") or (request.args.get("teacher_password") == TEACHER_PASSWORD)
-    public = (request.args.get("mode") == "public")
-    if public:
-        show_names = False
-
+    # 老师查看录取座位图
     db = get_db()
     c = db.cursor()
     c.execute("SELECT name,admitted FROM students WHERE admitted IS NOT NULL")
@@ -205,36 +170,35 @@ def seatmap():
         assigned.setdefault(r["admitted"], []).append(r["name"])
 
     groups = [("第一组",7),("第二组",8),("第三组",8),("第四组",7)]
-    width = 1400; height = 650; padding = 40
+    width = 1200; height = 600; padding = 50
     img = Image.new("RGB", (width, height), (245,250,255))
     draw = ImageDraw.Draw(img)
 
-    # 使用中文字体
+    # 中文字体
     font_path = os.path.join(app.static_folder, "fonts", "楷体_GB2312.ttf")
     if os.path.exists(font_path):
-        font_title = ImageFont.truetype(font_path, 22)
+        font_title = ImageFont.truetype(font_path, 20)
         font_seat = ImageFont.truetype(font_path, 14)
     else:
         font_title = ImageFont.load_default()
         font_seat = ImageFont.load_default()
 
-    y = padding
-    for gname, rows in groups:
-        draw.text((padding, y-25), gname, fill=(30,111,186), font=font_title)
-        for r in range(1, rows+1):
+    group_width = (width - padding*2) / len(groups)
+    for gi, (gname, rows) in enumerate(groups):
+        gx = padding + gi * group_width
+        draw.text((gx + 40, padding - 25), gname, fill=(30,111,186), font=font_title)
+        for r in range(1, rows + 1):
             seat_name = f"{gname}第{r}排"
-            bx1 = padding; by1 = y + (r-1)*30
-            bx2 = bx1 + 420; by2 = by1 + 24
+            bx1 = gx; by1 = padding + (r - 1) * 30
+            bx2 = bx1 + group_width - 20; by2 = by1 + 24
             names = assigned.get(seat_name, [])
             fill = (255,255,255)
-            if len(names)==1: fill = (255,230,150)
-            if len(names)==2: fill = (100,200,120)
+            if len(names)==1: fill=(255,230,150)
+            if len(names)==2: fill=(120,200,120)
             draw.rectangle([(bx1,by1),(bx2,by2)], fill=fill, outline=(180,180,180))
-            text = f"{seat_name} ({len(names)}/2)"
-            draw.text((bx1+6, by1+4), text, fill=(0,0,0), font=font_seat)
-            if show_names and names:
-                draw.text((bx1+160, by1+4), "、".join(names), fill=(40,40,40), font=font_seat)
-        y += (rows*30) + 40
+            draw.text((bx1+5, by1+4), f"{r}排 ({len(names)}/2)", fill=(0,0,0), font=font_seat)
+            if names:
+                draw.text((bx1+80, by1+4), "、".join(names), fill=(40,40,40), font=font_seat)
 
     buf = BytesIO()
     img.save(buf, format="PNG")
