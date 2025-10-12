@@ -1,180 +1,131 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>老师 - 座位分配管理系统</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <style>
-    /* 在原有样式基础上增加 modal 样式 */
-    .modal { display:none; position:fixed; z-index:1200; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
-    .modal-content { background:#fff; padding:16px; border-radius:12px; max-width:90%; max-height:90%; overflow:auto; }
-    .modal-content img { max-width:100%; height:auto; display:block; margin:0 auto; }
-    .modal-close { float:right; cursor:pointer; color:#999; font-weight:bold; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>老师后台</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+th { background: #1e6fba; color: white; }
+tr:nth-child(even) { background: #f9f9f9; }
+
+#seatMapModal {
+  position: fixed; top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.6);
+  display:none; align-items:center; justify-content:center;
+  z-index: 999;
+}
+#seatMapModal img {
+  max-width: 90%; max-height: 85%;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+#seatMapModal .close-btn {
+  position:absolute; top:20px; right:30px;
+  background:#fff; color:#000;
+  border:none; border-radius:6px;
+  padding:8px 12px; cursor:pointer;
+  font-weight:bold;
+}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>🧑‍🏫 座位分配管理系统（老师端）</h1>
+<div class="container">
+  <h1>👩‍🏫 老师后台</h1>
 
-    <div id="loginArea">
-      <div class="card" style="max-width:400px; margin:auto;">
-        <h3>教师登录</h3>
-        <label>密码：<input type="password" id="teacherPw" placeholder="请输入教师密码" /></label>
-        <div style="margin-top:10px;"><button id="loginBtn">登录</button></div>
-        <span id="loginMsg" style="color:#dc3545; display:block; margin-top:8px;"></span>
-      </div>
-    </div>
-
-    <div id="controlArea" style="display:none;">
-      <div class="card" style="text-align:center;">
-        <button id="refreshBtn">刷新学生列表</button>
-        <button id="assignBtn" style="background:#28a745">开始分配</button>
-        <button id="viewSeatmapBtn" style="background:#17a2b8">查看录取座位图</button>
-        <button id="resetBtn" style="background:#6c757d">清空数据</button>
-        <button id="logoutBtn" style="background:#dc3545">退出登录</button>
-      </div>
-
-      <div class="card">
-        <h3>学生志愿列表（按成绩降序）</h3>
-        <div id="studentsArea">暂无数据</div>
-      </div>
-
-      <div class="card">
-        <h3>分配结果</h3>
-        <div id="resultsArea">暂无结果</div>
-      </div>
-
-      <div class="card">
-        <h3>分配过程记录</h3>
-        <div id="processArea">暂无记录</div>
-      </div>
-    </div>
+  <div class="card" id="loginBox">
+    <h3>请输入老师密码</h3>
+    <input id="teacherPwd" type="password" placeholder="请输入密码">
+    <button onclick="login()">登录</button>
   </div>
 
-  <!-- Modal for seatmap image -->
-  <div id="seatmapModal" class="modal">
-    <div class="modal-content">
-      <span id="closeSeatmap" class="modal-close">&times;</span>
-      <h3>录取座位图（含姓名）</h3>
-      <div style="text-align:center; margin-top:8px;">
-        <img id="seatmapImage" src="/seatmap.png" alt="seatmap">
-      </div>
-      <div style="text-align:center; margin-top:10px;">
-        <a id="downloadSeatmap" href="/seatmap.png" download="seatmap_teacher.png"><button>下载图片</button></a>
+  <div id="mainBox" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>学生志愿列表</h2>
+      <div>
+        <button onclick="assign()">开始分配</button>
+        <button onclick="viewSeatMap()">查看录取座位图</button>
+        <button style="background:#dc3545" onclick="resetAll()">清空数据</button>
       </div>
     </div>
+    <table id="studentTable">
+      <thead>
+        <tr><th>姓名</th><th>成绩</th><th>志愿</th><th>录取结果</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
+</div>
+
+<div id="seatMapModal">
+  <button class="close-btn" onclick="hideSeatMap()">× 关闭</button>
+  <img id="seatMapImage" src="" alt="座位图">
+</div>
 
 <script>
-  async function login(password){
-    const res = await fetch('/api/teacher_login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({password})
+function login() {
+  const pwd = document.getElementById("teacherPwd").value;
+  fetch("/api/teacher_login", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({password: pwd})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok){ 
+      document.getElementById("loginBox").style.display="none";
+      document.getElementById("mainBox").style.display="block";
+      loadStudents();
+    } else alert("密码错误");
+  });
+}
+
+function loadStudents(){
+  fetch("/api/students",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
+  .then(r=>r.json()).then(d=>{
+    const tbody=document.querySelector("#studentTable tbody");
+    tbody.innerHTML="";
+    d.students.forEach(s=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${s.name}</td><td>${s.score}</td>
+      <td>${s.volunteers.join("、")}</td><td>${s.admitted||""}</td>`;
+      tbody.appendChild(tr);
     });
-    return res.json();
-  }
-
-  document.getElementById('loginBtn').addEventListener('click', async ()=>{
-    const pw = document.getElementById('teacherPw').value.trim();
-    const r = await login(pw);
-    const msg = document.getElementById('loginMsg');
-    if(r.ok){
-      document.getElementById('loginArea').style.display='none';
-      document.getElementById('controlArea').style.display='block';
-      msg.textContent = '';
-      loadStudents(); loadResults();
-    } else {
-      msg.textContent = '密码错误，请重试';
-    }
   });
+}
 
-  document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-    await fetch('/api/logout', {method:'POST'});
-    document.getElementById('loginArea').style.display='block';
-    document.getElementById('controlArea').style.display='none';
+function assign(){
+  fetch("/api/assign",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){ alert("分配完成"); loadStudents(); }
   });
+}
 
-  document.getElementById('refreshBtn').addEventListener('click', loadStudents);
-  document.getElementById('assignBtn').addEventListener('click', async ()=>{
-    if(!confirm('确认开始分配？')) return;
-    const res = await fetch('/api/assign', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
-    const data = await res.json();
-    if(data.ok){
-      alert('分配完成');
-      loadStudents(); loadResults();
-      if(data.process) renderProcess(data.process);
-    } else {
-      alert(data.error || '分配失败（请确认已登录）');
-    }
-  });
+function resetAll(){
+  if(!confirm("确定清空所有数据？")) return;
+  fetch("/api/reset",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({teacher_password:document.getElementById("teacherPwd").value})})
+  .then(r=>r.json()).then(()=>{ alert("已清空"); loadStudents(); });
+}
 
-  document.getElementById('resetBtn').addEventListener('click', async ()=>{
-    if(!confirm('确认清空所有数据？')) return;
-    const res = await fetch('/api/reset', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
-    const d = await res.json();
-    if(d.ok){ alert('已清空'); loadStudents(); loadResults(); document.getElementById('processArea').innerText='暂无记录'; }
-    else alert('重置失败');
-  });
-
-  async function loadStudents(){
-    const res = await fetch('/api/students');
-    if(res.status===401){
-      alert('未登录或认证失败，请重新登录');
-      document.getElementById('loginArea').style.display='block';
-      document.getElementById('controlArea').style.display='none';
-      return;
-    }
-    const data = await res.json();
-    const area = document.getElementById('studentsArea');
-    if(!data.students || data.students.length===0){ area.innerText='暂无学生数据'; return; }
-    let html = '<table><tr><th>姓名</th><th>成绩</th><th>志愿(前3)</th><th>录取</th></tr>';
-    data.students.forEach(s=>{
-      const first3 = s.volunteers.slice(0,3).join('; ');
-      html += `<tr><td>${s.name}</td><td>${s.score}</td><td>${first3}${s.volunteers.length>3?'...':''}</td><td>${s.admitted || ''}</td></tr>`;
-    });
-    html += '</table>';
-    area.innerHTML = html;
-  }
-
-  async function loadResults(){
-    const res = await fetch('/api/results');
-    const data = await res.json();
-    const area = document.getElementById('resultsArea');
-    if(!data.results || data.results.length===0){ area.innerText='暂无结果'; return; }
-    let html = '<table><tr><th>姓名</th><th>成绩</th><th>录取排位</th></tr>';
-    data.results.forEach(r=>{
-      html += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.admitted || '未录取'}</td></tr>`;
-    });
-    html += '</table>';
-    area.innerHTML = html;
-  }
-
-  function renderProcess(process){
-    const area = document.getElementById('processArea');
-    if(!process || process.length===0){ area.innerText = '暂无记录'; return; }
-    let html = '<ol>';
-    process.forEach(p=>{
-      html += `<li>${p.student}（${p.score}分）→ ${p.volunteer}：${p.result}</li>`;
-    });
-    html += '</ol>';
-    area.innerHTML = html;
-  }
-
-  // seatmap modal
-  const seatmapModal = document.getElementById('seatmapModal');
-  const seatmapImage = document.getElementById('seatmapImage');
-  const closeSeatmap = document.getElementById('closeSeatmap');
-  document.getElementById('viewSeatmapBtn').addEventListener('click', ()=>{
-    // 强制刷新图像以避免缓存
-    seatmapImage.src = '/seatmap.png?ts=' + Date.now();
-    document.getElementById('downloadSeatmap').href = '/seatmap.png';
-    seatmapModal.style.display = 'flex';
-  });
-  closeSeatmap.onclick = ()=> seatmapModal.style.display = 'none';
-  seatmapModal.addEventListener('click', (e)=>{ if(e.target === seatmapModal) seatmapModal.style.display='none'; });
-
+function viewSeatMap(){
+  const modal=document.getElementById("seatMapModal");
+  const img=document.getElementById("seatMapImage");
+  const pwd=document.getElementById("teacherPwd").value;
+  img.src="/seatmap.png?t="+Date.now()+"&teacher_password="+pwd;
+  modal.style.display="flex";
+}
+function hideSeatMap(){
+  document.getElementById("seatMapModal").style.display="none";
+}
 </script>
 </body>
 </html>
