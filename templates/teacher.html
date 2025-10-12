@@ -3,41 +3,163 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>老师 - 座位分配管理</title>
+  <title>老师端 - 座位分配管理系统</title>
   <link rel="stylesheet" href="/static/style.css">
   <style>
-    body{font-family: "Microsoft YaHei",sans-serif;padding:20px;background:#f5f7fa}
-    .container{max-width:1100px;margin:0 auto;background:#fff;padding:20px;border-radius:8px}
-    button{padding:8px 12px;border-radius:6px;border:none;background:#1e6fba;color:#fff;cursor:pointer}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #eee;padding:8px;text-align:left}
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      background: linear-gradient(to right, #f8fbff, #eef5fc);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #1e6fba;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    h3 {
+      color: #1e6fba;
+      margin-top: 25px;
+      margin-bottom: 12px;
+    }
+
+    /* 按钮样式 */
+    button {
+      background-color: #1e6fba;
+      border: none;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-right: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background-color: #155a9e;
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #assignBtn { background: #28a745; }
+    #resetBtn { background: #6c757d; }
+    #logoutBtn { background: #dc3545; }
+
+    input[type=password] {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      margin-left: 6px;
+    }
+    input:focus { outline: none; border-color: #1e6fba; }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+      margin-top: 20px;
+    }
+
+    /* 表格美化 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #f9fbff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    th {
+      background: #1e6fba;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+    }
+    td {
+      border-bottom: 1px solid #eaeaea;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    tr:nth-child(even) {
+      background: #f4f8ff;
+    }
+
+    #loginArea {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    #loginMsg {
+      color: #dc3545;
+      display: block;
+      margin-top: 10px;
+    }
+
+    ol {
+      padding-left: 25px;
+      line-height: 1.7;
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h1>老师端 — 管理与分配</h1>
+    <h1>🧑‍🏫 座位分配管理系统（老师端）</h1>
 
     <div id="loginArea">
-      <label>教师密码：<input type="password" id="teacherPw" /></label>
-      <button id="loginBtn">登录</button>
-      <span id="loginMsg" style="margin-left:10px;color:#888"></span>
+      <div class="card" style="max-width:400px; margin:auto;">
+        <h3>教师登录</h3>
+        <label>
+          密码：
+          <input type="password" id="teacherPw" placeholder="请输入教师密码" />
+        </label>
+        <div style="margin-top:15px;">
+          <button id="loginBtn">登录</button>
+        </div>
+        <span id="loginMsg"></span>
+      </div>
     </div>
 
-    <div id="controlArea" style="display:none;margin-top:12px">
-      <button id="refreshBtn">刷新学生列表</button>
-      <button id="assignBtn" style="background:#28a745">开始模拟分配</button>
-      <button id="resetBtn" style="background:#6c757d">重置所有数据</button>
-      <button id="logoutBtn" style="background:#dc3545">登出</button>
+    <div id="controlArea" style="display:none;">
+      <div class="card" style="text-align:center;">
+        <button id="refreshBtn">刷新学生列表</button>
+        <button id="assignBtn">开始分配</button>
+        <button id="resetBtn">清空数据</button>
+        <button id="logoutBtn">退出登录</button>
+      </div>
+
+      <div class="card">
+        <h3>学生志愿列表（按成绩降序）</h3>
+        <div id="studentsArea">暂无数据</div>
+      </div>
+
+      <div class="card">
+        <h3>分配结果</h3>
+        <div id="resultsArea">暂无结果</div>
+      </div>
+
+      <div class="card">
+        <h3>分配过程记录</h3>
+        <div id="processArea">暂无记录</div>
+      </div>
     </div>
-
-    <h3 style="margin-top:16px">学生志愿列表（按成绩降序）</h3>
-    <div id="studentsArea">尚未登录</div>
-
-    <h3 style="margin-top:16px">分配结果</h3>
-    <div id="resultsArea">暂无</div>
-
-    <h3 style="margin-top:16px">分配过程记录</h3>
-    <div id="processArea">暂无</div>
   </div>
 
 <script>
@@ -51,16 +173,17 @@
   }
 
   document.getElementById('loginBtn').addEventListener('click', async ()=>{
-    const pw = document.getElementById('teacherPw').value;
+    const pw = document.getElementById('teacherPw').value.trim();
     const r = await login(pw);
+    const msg = document.getElementById('loginMsg');
     if(r.ok){
       document.getElementById('loginArea').style.display='none';
       document.getElementById('controlArea').style.display='block';
+      msg.textContent = '';
       loadStudents();
       loadResults();
-      document.getElementById('loginMsg').textContent = '';
     } else {
-      document.getElementById('loginMsg').textContent = '密码错误';
+      msg.textContent = '密码错误，请重试';
     }
   });
 
@@ -72,7 +195,7 @@
 
   document.getElementById('refreshBtn').addEventListener('click', loadStudents);
   document.getElementById('assignBtn').addEventListener('click', async ()=>{
-    if(!confirm('确认开始模拟分配？')) return;
+    if(!confirm('确认开始分配？')) return;
     const res = await fetch('/api/assign', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
     const data = await res.json();
     if(data.ok){
@@ -81,22 +204,26 @@
       loadResults();
       if(data.process) renderProcess(data.process);
     } else {
-      alert(data.error || '分配失败（请确认已登录）');
+      alert(data.error || '分配失败');
     }
   });
 
   document.getElementById('resetBtn').addEventListener('click', async ()=>{
-    if(!confirm('确认重置所有数据？')) return;
+    if(!confirm('确认清空所有数据？')) return;
     const res = await fetch('/api/reset', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
     const d = await res.json();
-    if(d.ok){ alert('已重置'); loadStudents(); loadResults(); document.getElementById('processArea').innerText='暂无'; }
-    else alert('重置失败');
+    if(d.ok){
+      alert('已清空');
+      loadStudents();
+      loadResults();
+      document.getElementById('processArea').innerText='暂无记录';
+    }
   });
 
   async function loadStudents(){
     const res = await fetch('/api/students');
     if(res.status===401){
-      alert('未登录或认证失败，请重新登录');
+      alert('未登录，请重新输入密码');
       document.getElementById('loginArea').style.display='block';
       document.getElementById('controlArea').style.display='none';
       return;
@@ -107,7 +234,7 @@
     let html = '<table><tr><th>姓名</th><th>成绩</th><th>志愿(前3)</th><th>录取</th></tr>';
     data.students.forEach(s=>{
       const first3 = s.volunteers.slice(0,3).join('; ');
-      html += `<tr><td>${s.name}</td><td>${s.score}</td><td>${first3}${s.volunteers.length>3? ' ...':''}</td><td>${s.admitted || ''}</td></tr>`;
+      html += `<tr><td>${s.name}</td><td>${s.score}</td><td>${first3}${s.volunteers.length>3?'...':''}</td><td>${s.admitted || ''}</td></tr>`;
     });
     html += '</table>';
     area.innerHTML = html;
@@ -118,7 +245,7 @@
     const data = await res.json();
     const area = document.getElementById('resultsArea');
     if(!data.results || data.results.length===0){ area.innerText='暂无结果'; return; }
-    let html = '<table><tr><th>姓名</th><th>成绩</th><th>录取</th></tr>';
+    let html = '<table><tr><th>姓名</th><th>成绩</th><th>录取排位</th></tr>';
     data.results.forEach(r=>{
       html += `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.admitted || '未录取'}</td></tr>`;
     });
@@ -128,15 +255,14 @@
 
   function renderProcess(process){
     const area = document.getElementById('processArea');
-    if(!process || process.length===0){ area.innerText = '暂无分配过程记录'; return; }
+    if(!process || process.length===0){ area.innerText = '暂无记录'; return; }
     let html = '<ol>';
     process.forEach(p=>{
-      html += `<li>${p.student} (${p.score}) -> ${p.volunteer} : ${p.result}</li>`;
+      html += `<li>${p.student}（${p.score}分）→ ${p.volunteer}：${p.result}</li>`;
     });
     html += '</ol>';
     area.innerHTML = html;
   }
-
 </script>
 </body>
 </html>
