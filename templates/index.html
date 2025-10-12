@@ -1,44 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>座位分配系统 - 入口</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <style>
-    .hero {
-      text-align:center;
-      padding:60px 20px;
-    }
-    .btn-big {
-      display:inline-block;
-      margin:12px;
-      padding:14px 22px;
-      border-radius:12px;
-      background:#1e6fba;
-      color:#fff;
-      text-decoration:none;
-      font-size:18px;
-      box-shadow:0 6px 18px rgba(30,111,186,0.18);
-    }
-    .btn-secondary {
-      background:#6c757d;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>座位分配系统</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.hero { text-align:center; padding:60px 20px; }
+.btn-big {
+  display:inline-block; margin:12px; padding:14px 22px;
+  border-radius:12px; background:#1e6fba; color:#fff;
+  text-decoration:none; font-size:18px;
+  box-shadow:0 6px 18px rgba(30,111,186,0.18);
+}
+.btn-secondary { background:#6c757d; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="hero card">
-      <h1>🎓 座位分配系统</h1>
-      <p style="color:#666">请选择你的身份</p>
-      <div style="margin-top:24px;">
-        <a class="btn-big" href="/student">我是学生</a>
-        <a class="btn-big btn-secondary" href="/teacher">我是老师</a>
-      </div>
-    </div>
-    <div style="text-align:center; color:#888; margin-top:10px;">
-      访问老师页面需要教师密码
-    </div>
-  </div>
+<div class="container hero">
+  <h1>🎓 座位分配系统</h1>
+  <p style="color:#666">请选择你的身份</p>
+  <a class="btn-big" href="/student">我是学生</a>
+  <a class="btn-big btn-secondary" href="/teacher">我是老师</a>
+</div>
 </body>
 </html>
