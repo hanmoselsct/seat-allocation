@@ -7,73 +7,37 @@
 <link rel="stylesheet" href="/static/style.css">
 <style>
 .volunteer-item {
-  display: inline-block;
-  padding: 8px 14px;
-  margin: 6px;
-  border-radius: 8px;
-  border: 1px solid #cdd7e3;
-  background: #f5f9ff;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s;
-  user-select: none;
+  display:inline-block; padding:8px 14px; margin:6px;
+  border-radius:8px; border:1px solid #cdd7e3;
+  background:#f5f9ff; color:#333;
+  cursor:pointer; transition:all 0.2s; user-select:none;
 }
-.volunteer-item:hover { background: #e9f2ff; transform: scale(1.05); }
-.volunteer-item.selected {
-  background: #1e6fba; color: #fff; border-color: #155a9e;
-}
-
-#seatMapModal {
-  position: fixed; top:0; left:0; right:0; bottom:0;
-  background: rgba(0,0,0,0.6);
-  display:none; align-items:center; justify-content:center;
-  z-index: 999;
-}
-#seatMapModal img {
-  max-width: 90%; max-height: 85%;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-#seatMapModal .close-btn {
-  position:absolute; top:20px; right:30px;
-  background:#fff; color:#000;
-  border:none; border-radius:6px;
-  padding:8px 12px; cursor:pointer;
-  font-weight:bold;
-}
+.volunteer-item:hover { background:#e9f2ff; transform:scale(1.05); }
+.volunteer-item.selected { background:#1e6fba; color:#fff; border-color:#155a9e; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>🎓 学生填报志愿</h1>
-
   <div class="card">
-    <label>姓名：</label>
-    <input id="nameInput" type="text" placeholder="请输入姓名">
-    <label style="margin-left:10px;">成绩：</label>
-    <input id="scoreInput" type="number" placeholder="请输入分数">
+    <label>姓名：</label><input id="nameInput" type="text">
+    <label style="margin-left:10px;">成绩：</label><input id="scoreInput" type="number">
   </div>
 
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;">志愿选择（最多 20 个）</h3>
-      <button onclick="showSeatMap()">查看座位分布图</button>
-    </div>
+    <h3>志愿选择（最多 20 个）</h3>
     <div id="selectedCount" style="color:#1e6fba;font-weight:bold;margin:10px 0;">已选 0 / 20</div>
     <div id="volunteersGrid"></div>
   </div>
 
   <div style="text-align:center;margin-top:20px;">
     <button onclick="submitForm()">提交志愿</button>
+    <a href="/teacher" style="margin-left:10px;text-decoration:none;">
+      <button style="background:#6c757d;">老师后台入口</button>
+    </a>
   </div>
 
   <div id="notif" style="position:fixed;bottom:20px;right:20px;"></div>
-</div>
-
-<!-- 弹窗显示座位图 -->
-<div id="seatMapModal">
-  <button class="close-btn" onclick="hideSeatMap()">× 关闭</button>
-  <img id="seatMapImage" src="" alt="座位分布图">
 </div>
 
 <script>
@@ -81,104 +45,60 @@ const MAX_VOLUNTEERS = 20;
 let selectedVolunteers = [];
 
 function notify(msg) {
-  const n = document.createElement("div");
-  n.textContent = msg;
-  n.style.background = "#1e6fba";
-  n.style.color = "white";
-  n.style.padding = "10px 16px";
-  n.style.marginTop = "6px";
-  n.style.borderRadius = "8px";
-  n.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+  const n=document.createElement("div");
+  n.textContent=msg;
+  n.style.background="#1e6fba"; n.style.color="white";
+  n.style.padding="10px 16px"; n.style.borderRadius="8px";
+  n.style.marginTop="6px"; n.style.boxShadow="0 4px 10px rgba(0,0,0,0.2)";
   document.getElementById("notif").appendChild(n);
   setTimeout(()=>n.remove(),3000);
 }
 
-// 渲染志愿分组
 function renderVolunteerChoices() {
-  const grid = document.getElementById("volunteersGrid");
-  grid.innerHTML = "";
-  const groups = { "第一组":7, "第二组":8, "第三组":8, "第四组":7 };
-
-  Object.entries(groups).forEach(([gname, rows]) => {
-    const groupCard = document.createElement("div");
-    groupCard.className = "card";
-    const title = document.createElement("h3");
-    title.style.marginTop = "0";
-    title.textContent = gname;
-    groupCard.appendChild(title);
-
-    const wrap = document.createElement("div");
-    wrap.style.display = "flex";
-    wrap.style.flexWrap = "wrap";
-    wrap.style.gap = "6px";
-
-    for (let r = 1; r <= rows; r++) {
-      const seat = `${gname}第${r}排`;
-      const div = document.createElement("div");
-      div.className = "volunteer-item";
-      div.textContent = `第${r}排`;
-      if (selectedVolunteers.includes(seat)) div.classList.add("selected");
-      div.onclick = () => {
-        const idx = selectedVolunteers.indexOf(seat);
-        if (idx === -1) {
-          if (selectedVolunteers.length >= MAX_VOLUNTEERS) {
-            notify("最多 20 个志愿");
-            return;
-          }
-          selectedVolunteers.push(seat);
-          div.classList.add("selected");
-        } else {
-          selectedVolunteers.splice(idx, 1);
-          div.classList.remove("selected");
-        }
-        updateSelectedCount();
+  const grid=document.getElementById("volunteersGrid");
+  grid.innerHTML="";
+  const groups={"第一组":7,"第二组":8,"第三组":8,"第四组":7};
+  Object.entries(groups).forEach(([gname,rows])=>{
+    const card=document.createElement("div");
+    card.className="card";
+    const title=document.createElement("h3");
+    title.textContent=gname;
+    card.appendChild(title);
+    const wrap=document.createElement("div");
+    wrap.style.display="flex"; wrap.style.flexWrap="wrap"; wrap.style.gap="6px";
+    for(let r=1;r<=rows;r++){
+      const seat=`${gname}第${r}排`;
+      const div=document.createElement("div");
+      div.className="volunteer-item";
+      div.textContent=`第${r}排`;
+      if(selectedVolunteers.includes(seat)) div.classList.add("selected");
+      div.onclick=()=>{
+        const idx=selectedVolunteers.indexOf(seat);
+        if(idx===-1){
+          if(selectedVolunteers.length>=MAX_VOLUNTEERS){ notify("最多 20 个志愿"); return;}
+          selectedVolunteers.push(seat); div.classList.add("selected");
+        } else { selectedVolunteers.splice(idx,1); div.classList.remove("selected"); }
+        updateCount();
       };
       wrap.appendChild(div);
     }
-
-    groupCard.appendChild(wrap);
-    grid.appendChild(groupCard);
+    card.appendChild(wrap); grid.appendChild(card);
   });
-  updateSelectedCount();
+  updateCount();
+}
+function updateCount(){
+  document.getElementById("selectedCount").textContent=`已选 ${selectedVolunteers.length} / ${MAX_VOLUNTEERS}`;
 }
 
-function updateSelectedCount() {
-  const c = selectedVolunteers.length;
-  document.getElementById("selectedCount").textContent = `已选 ${c} / ${MAX_VOLUNTEERS}`;
+function submitForm(){
+  const name=document.getElementById("nameInput").value.trim();
+  const score=document.getElementById("scoreInput").value;
+  if(!name||!score){notify("请填写姓名和成绩");return;}
+  if(selectedVolunteers.length===0){notify("请选择志愿");return;}
+  fetch("/api/submit",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({name,score,volunteers:selectedVolunteers})})
+  .then(r=>r.json()).then(d=>{notify(d.ok?"提交成功":"提交失败");});
 }
-
-function submitForm() {
-  const name = document.getElementById("nameInput").value.trim();
-  const score = document.getElementById("scoreInput").value;
-  if (!name || !score) {
-    notify("请填写姓名和成绩");
-    return;
-  }
-  if (selectedVolunteers.length === 0) {
-    notify("请选择志愿");
-    return;
-  }
-  fetch("/api/submit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, score, volunteers: selectedVolunteers })
-  }).then(r=>r.json()).then(d=>{
-    if (d.ok) notify("提交成功");
-    else notify("提交失败");
-  });
-}
-
-// 弹窗查看座位分布图
-function showSeatMap() {
-  const modal = document.getElementById("seatMapModal");
-  const img = document.getElementById("seatMapImage");
-  img.src = "/seatmap.png?mode=public&t=" + Date.now();
-  modal.style.display = "flex";
-}
-function hideSeatMap() {
-  document.getElementById("seatMapModal").style.display = "none";
-}
-
 renderVolunteerChoices();
 </script>
 </body>
