@@ -1,4 +1,53 @@
-/* static/style.css - 可根据需要扩展 */
-body { font-family: "Microsoft YaHei", sans-serif; background:#f5f7fa; color:#333; }
-.container { max-width:1100px; margin:20px auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-button { cursor:pointer; border:none; border-radius:6px; padding:8px 12px; }
+body {
+  font-family: "Microsoft YaHei", sans-serif;
+  background: linear-gradient(to right, #f8fbff, #eef5fc);
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.container {
+  max-width: 1300px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+h1,h2,h3 {
+  color:#1e6fba;
+  text-align:center;
+}
+
+button {
+  background-color:#1e6fba;
+  border:none;
+  color:#fff;
+  padding:10px 18px;
+  border-radius:8px;
+  font-size:14px;
+  cursor:pointer;
+  transition:0.2s;
+}
+button:hover {
+  background-color:#155a9e;
+  transform:translateY(-1px);
+}
+button:active { transform:scale(0.98); }
+
+input[type=text], input[type=number], input[type=password] {
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:14px;
+}
+input:focus { outline:none; border-color:#1e6fba; }
+
+.card {
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom:20px;
+}
