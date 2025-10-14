@@ -188,6 +188,14 @@ def seatmap():
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
 
+@app.route("/dbtest")
+def dbtest():
+    with engine.connect() as conn:
+        total = conn.execute(text("SELECT COUNT(*) FROM students")).scalar()
+    db_type = "PostgreSQL" if DATABASE_URL else "SQLite"
+    return f"✅ 数据库连接成功：{db_type}<br>当前学生数：{total}"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
