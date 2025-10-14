@@ -158,7 +158,7 @@ def seatmap():
     img = Image.new("RGB", (width, height), (245,250,255))
     draw = ImageDraw.Draw(img)
 
-    font_path = os.path.join(app.static_folder, "fonts", "NotoSansSC-Regular.otf")
+    font_path = os.path.join(app.static_folder, "fonts", "楷体_GB2312.ttf")
     if os.path.exists(font_path):
         font_title = ImageFont.truetype(font_path, 20)
         font_seat = ImageFont.truetype(font_path, 14)
@@ -190,3 +190,4 @@ def seatmap():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
